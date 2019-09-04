@@ -1,0 +1,13 @@
+{
+  "measure" : "reward",
+  "thresholds" : [1000, 1500, 1500],
+  "min_lesson_length" : 1000,
+  "signal_smoothing" : true,
+  "parameters" :
+  {
+    "fenceMinHeight" : [0.0, 0.50, 1.25, 2.5],
+    "fenceMaxHeight" : [0.50, 1.25, 2.5, 4.0],
+    "wallMinWidth" : [0.0, 10.0, 20.0, 30.0],
+    "wallMaxWidth" : [10.0, 20.0, 30.0, 30.0]
+  }
+}

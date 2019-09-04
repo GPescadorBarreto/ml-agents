@@ -26,6 +26,9 @@ TagManager:
   - pyramid
   - switchOn
   - stone
+  - target
+  - obstacle
+  - fence
   layers:
   - Default
   - TransparentFX

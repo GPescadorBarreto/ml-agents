@@ -44,7 +44,7 @@ PushBlockLearning:
     time_horizon: 64
     num_layers: 2
 
-SmallWallJumpLearning: 
+SmallWallJumpLearning:
     max_steps: 1.0e6
     batch_size: 128
     buffer_size: 2048
@@ -55,7 +55,7 @@ SmallWallJumpLearning:
     num_layers: 2
     normalize: false
 
-BigWallJumpLearning: 
+BigWallJumpLearning:
     max_steps: 1.0e6
     batch_size: 128
     buffer_size: 2048
@@ -174,7 +174,7 @@ WalkerLearning:
     batch_size: 2048
     buffer_size: 20480
     gamma: 0.995
-    max_steps: 2e6
+    max_steps: 10e6
     summary_freq: 3000
     num_layers: 3
     hidden_units: 512
@@ -257,3 +257,7 @@ BasicLearning:
     max_steps: 5.0e5
     summary_freq: 2000
     time_horizon: 3
+
+RollerBallBrain:
+    batch_size: 10
+    buffer_size: 100

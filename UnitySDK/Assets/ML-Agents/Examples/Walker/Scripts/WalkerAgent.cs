@@ -5,10 +5,23 @@ using MLAgents;
 
 public class WalkerAgent : Agent
 {
-    [Header("Specific to Walker")] [Header("Target To Walk Towards")] [Space(10)]
-    public Transform target;
+    [Header("Obstacle")]
+    float startDistance = -300;
+    float obstacleInterval = 100;
+    public Transform fencePrefab;
+    //public Transform wallPrefab;
+    float fenceMinHeight;
+    float fenceMaxHeight;
+    float wallMinWidth;
+    float wallMaxWidth;
+    List<Transform> fences;
+    int obstaclesGenerated;
 
+    [Header("Target To Walk Towards")]
+    public Transform target;
     Vector3 dirToTarget;
+
+    [Header("Specific to Walker")]
     public Transform hips;
     public Transform chest;
     public Transform spine;
@@ -26,8 +39,10 @@ public class WalkerAgent : Agent
     public Transform forearmR;
     public Transform handR;
     JointDriveController jdController;
+    RayPerception3D rayPer;
     bool isNewDecisionStep;
     int currentDecisionStep;
+
 
     public override void InitializeAgent()
     {
@@ -48,6 +63,14 @@ public class WalkerAgent : Agent
         jdController.SetupBodyPart(armR);
         jdController.SetupBodyPart(forearmR);
         jdController.SetupBodyPart(handR);
+        rayPer = head.GetComponent<RayPerception3D>();
+
+        obstaclesGenerated = 0;
+        fences = new List<Transform>();
+        fenceMinHeight = WalkerAcademy.fenceMinHeight;
+        fenceMaxHeight = WalkerAcademy.fenceMaxHeight;
+        while(obstaclesGenerated < 15)
+            GenerateFence(fenceMinHeight, fenceMaxHeight);
     }
 
     /// <summary>
@@ -73,7 +96,7 @@ public class WalkerAgent : Agent
     }
 
     /// <summary>
-    /// Loop over body parts to add them to observation.
+    /// Add ray perception and loop over body parts to add them to observation.
     /// </summary>
     public override void CollectObservations()
     {
@@ -83,6 +106,15 @@ public class WalkerAgent : Agent
         AddVectorObs(jdController.bodyPartsDict[hips].rb.position);
         AddVectorObs(hips.forward);
         AddVectorObs(hips.up);
+
+        const float rayDistance = 50f;
+        float[] rayAngles = { 90f, 70f, 110f};
+        float[] rayAngles1 = { 95f, 75f, 115f};
+        float[] rayAngles2 = { 85f, 65f, 105f};
+        string[] detectableObjects = {"ground", "target", "fence"};
+        AddVectorObs(rayPer.Perceive(rayDistance, rayAngles, detectableObjects, 0f, 0f));
+        AddVectorObs(rayPer.Perceive(rayDistance, rayAngles1, detectableObjects, 0f, -30f));
+        AddVectorObs(rayPer.Perceive(rayDistance, rayAngles2, detectableObjects, 0f, -15f));
 
         foreach (var bodyPart in jdController.bodyPartsDict.Values)
         {
@@ -94,7 +126,7 @@ public class WalkerAgent : Agent
     {
         dirToTarget = target.position - jdController.bodyPartsDict[hips].rb.position;
 
-        // Apply action to all relevant body parts. 
+        // Apply action to all relevant body parts.
         if (isNewDecisionStep)
         {
             var bpDict = jdController.bodyPartsDict;
@@ -141,7 +173,7 @@ public class WalkerAgent : Agent
         // c. Encourage head height.
         // d. Discourage head movement.
         AddReward(
-            +0.03f * Vector3.Dot(dirToTarget.normalized, jdController.bodyPartsDict[hips].rb.velocity)
+            + 0.03f * Vector3.Dot(dirToTarget.normalized, jdController.bodyPartsDict[hips].rb.velocity)
             + 0.01f * Vector3.Dot(dirToTarget.normalized, hips.forward)
             + 0.02f * (head.position.y - hips.position.y)
             - 0.01f * Vector3.Distance(jdController.bodyPartsDict[head].rb.velocity,
@@ -168,7 +200,7 @@ public class WalkerAgent : Agent
     }
 
     /// <summary>
-    /// Loop over body parts and reset them to initial conditions.
+    /// Loop over body parts and reset them to initial conditions, then delete old obstacles and generate new ones.
     /// </summary>
     public override void AgentReset()
     {
@@ -184,5 +216,35 @@ public class WalkerAgent : Agent
 
         isNewDecisionStep = true;
         currentDecisionStep = 1;
+
+        fenceMinHeight = WalkerAcademy.fenceMinHeight;
+        fenceMaxHeight = WalkerAcademy.fenceMaxHeight;
+        int i = 0;
+        fences.ForEach(delegate(Transform aux){
+          UpdateFence(aux,fenceMinHeight,fenceMaxHeight,i);
+          i++;
+          });
+
+
+
+    }
+
+    private void GenerateFence(float minHeight, float maxHeight){
+      Transform fence = null;
+      fence = Instantiate(fencePrefab,
+                          new Vector3(startDistance+(obstaclesGenerated*obstacleInterval)+Random.Range(-30,30),target.position.y,target.position.z),
+                          Quaternion.LookRotation(dirToTarget));
+      fence.gameObject.transform.localScale = new Vector3(0.25f,Random.Range(minHeight,maxHeight),100f);
+      obstaclesGenerated++;
+      fences.Add(fence);
+    }
+
+    private void UpdateFence(Transform fence, float minHeight, float maxHeight, int i){
+      fence.gameObject.transform.position = new Vector3(startDistance+(i*obstacleInterval)+Random.Range(-30,30),target.position.y,target.position.z);
+      fence.gameObject.transform.localScale = new Vector3(0.25f,Random.Range(minHeight,maxHeight),100f);
+    }
+
+    private void GenerateWall(float minWidth, float maxWidth){
+      //TO DO
     }
 }
